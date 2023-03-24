@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+service TicTacToe {
+    rpc Ack(AckRequest) returns (AckResponse) {}
+    rpc Time(TimeRequest) returns (TimeResponse) {}
+    rpc ReceiveTime(SetTime) returns (Empty) {}
+    rpc Move(MoveRequest) returns (MoveResponse) {}
+}
+
+message AckRequest {}
+
+message AckResponse {
+    string name = 1;
+}
+
+message TimeRequest {}
+
+message TimeResponse {
+    string time = 1;
+}
+
+message SetTime {
+    int32 time_diff = 1;
+}
+
+message MoveRequest {
+    int32 tile = 1;
+}
+
+message MoveResponse {
+    bool success = 1;
+}
+
+message Empty {}
