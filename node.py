@@ -177,7 +177,6 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
 
 
 def serve():
-    print(time.time())
     if array_index(sys.argv, '--help') != -1:
         print_help()
         return
