@@ -162,7 +162,6 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         future_datetime = datetime.combine(current_datetime.date(),datetime.strptime(request.time,'%H:%M:%S').time())
         self.time_diff = (future_datetime-datetime.utcnow())/timedelta(milliseconds=1)
         print("New UTC time:", datetime.utcnow()+timedelta(milliseconds=self.time_diff))
-        self.print_node_name()
         return tictactoe_pb2.SetTimeResponse(time_accepted=True)
 
     def sync_time(self):
@@ -294,14 +293,6 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
     def MakeAMove(self, tile):
         pass
 
-    # TODO: Deprecated
-    def select_leader(self):
-        if self.name > self.node2name and self.name > self.node3name:
-            self.amITheLeader = True
-            print("I am the leader.")
-        else:
-            print("I am not the leader.")
-    
     def process_command(self, command):
         m = pattern_set_symbol.match(command)
         if m:
