@@ -105,7 +105,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         self.received_diff = False
         self.time_diff = 0
 
-        self.amITheLeader = False
+        self.game_board = None
 
     def Ack(self, request, context):
         return tictactoe_pb2.AckResponse(name=self.name, id=self.id)
@@ -329,7 +329,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
             future_datetime = datetime.combine(current_datetime.date(),datetime.strptime(time,'%H:%M:%S').time())
             self.time_diff = (future_datetime-datetime.utcnow())/timedelta(milliseconds=1)
             print("New UTC time:", datetime.utcnow()+timedelta(milliseconds=self.time_diff))
-        elif self.amITheLeader:
+        elif self.coordinator == self.id:
             if self.node2name == node_name:
                 try:
                     with grpc.insecure_channel(self.node2) as channel:
@@ -349,7 +349,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
             else:
                 print(node_name, "is not a valid node name.")
         else:
-            print("Only the leader can change time of other nodes.")
+            print("Only the game master can change time of other nodes.")
 
     
     def set_time_out(self, role, time):
@@ -404,8 +404,6 @@ def serve():
         time.sleep(0.25)
 
     if servicer.id == servicer.coordinator:
-        # TODO: deprecated
-        servicer.amITheLeader = True
         print('{} selected as coordinator'.format(servicer.name))
 
     # Game loop
