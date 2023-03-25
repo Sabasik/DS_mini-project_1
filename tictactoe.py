@@ -77,6 +77,32 @@ def get_result(res):
     return res
 
 
+def matrix_to_list(matrix):
+    board_list = []
+    for row in matrix:
+        for elem in row:
+            board_list.append(elem)
+    return board_list
+
+
+def list_to_matrix(board_list):
+    matrix = []
+    for i in range(3):
+        matrix.append([])
+        for j in range(3):
+            matrix[i].append(board_list[3*i+j])
+    return matrix
+
+
+def blank_board_list():
+    return matrix_to_list(blank_board)
+
+def print_board_list(board_list):
+    el = []
+    for item in board_list:
+        el.append(item if item in ['X', 'O'] else "empty")
+    return ", ".join(el)
+
 b = blank_board()
 letters = {True: "X", False: "O"}
 X = True
