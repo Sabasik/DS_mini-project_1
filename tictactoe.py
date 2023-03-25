@@ -63,6 +63,14 @@ def add_element(board, place, el):
     return True, board
 
 
+def print_board(board):
+    el = []
+    for row in el:
+        for e in row:
+            el.append(e if e in ['X', 'O'] else "empty")
+    return ", ".join(el)
+
+
 def get_result(res):
     if len(res) == 1:
         return res + " wins"
