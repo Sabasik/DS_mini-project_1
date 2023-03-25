@@ -89,7 +89,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         self.node3name = None
 
         self.received_diff = False
-        self.time_diff = None
+        self.time_diff = timedelta()
 
         self.amITheLeader = False
 
@@ -251,6 +251,21 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
     
     def set_node_time(self, node_name, time):
         print("Set node time",node_name,time)
+        if self.name == node_name:
+            current_datetime = datetime.utcnow()+self.time_diff
+            future_datetime = datetime.combine(current_datetime.date(),datetime.strptime('13:24:23','%H:%M:%S').time())
+            self.time_diff = future_datetime-datetime.utcnow()
+            print("New UTC time:", datetime.utcnow()+self.time_diff)
+        elif self.amITheLeader:
+            if self.node2name == node_name:
+                print("There")
+            elif self.node3name == node_name:
+                print("Not there")
+            else:
+                print(node_name, "is not a valid node name.")
+        else:
+            print("Only the leader can change time of other nodes.")
+
     
     def set_time_out(self, role, time):
         print("Set time-out",role,time)
