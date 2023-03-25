@@ -253,7 +253,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         print("Set node time",node_name,time)
         if self.name == node_name:
             current_datetime = datetime.utcnow()+timedelta(milliseconds=self.time_diff)
-            future_datetime = datetime.combine(current_datetime.date(),datetime.strptime('13:24:23','%H:%M:%S').time())
+            future_datetime = datetime.combine(current_datetime.date(),datetime.strptime(time,'%H:%M:%S').time())
             self.time_diff = (future_datetime-datetime.utcnow())/timedelta(milliseconds=1)
             print("New UTC time:", datetime.utcnow()+timedelta(milliseconds=self.time_diff))
         elif self.amITheLeader:
