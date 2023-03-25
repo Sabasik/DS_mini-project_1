@@ -11,7 +11,7 @@ pattern_set_symbol = re.compile("Set-symbol (\d), ([OX])")
 pattern_list_board = re.compile("List-board")
 pattern_start_game = re.compile("Start-game")
 pattern_set_node_time = re.compile("Set-node-time (.*) (\d\d:\d\d:\d\d)")
-pattern_set_time_out = re.compile("Set-time-out (players|game-master) (\d(.\d*)?)")
+pattern_set_time_out = re.compile("Set-time-out (players|game-master) (\d+(\.\d*)?)")
 
 def print_help():
     print("""
@@ -212,6 +212,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         if m:
             self.start_game()
             return
+        print("Unknown command!")
 
     def set_symbol(self, position, symbol):
         print("Set symbol",symbol, position)
