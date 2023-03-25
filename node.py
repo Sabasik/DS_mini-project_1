@@ -155,6 +155,14 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         self.received_diff = True
         self.time_diff = request.time_diff
         return tictactoe_pb2.SetTimeResponse(time_accepted=True)
+    
+    def ReceiveTimeString(self, request, context):
+        print('{} received new time {}'.format(self.name, request.time))
+        current_datetime = datetime.utcnow()+timedelta(milliseconds=self.time_diff)
+        future_datetime = datetime.combine(current_datetime.date(),datetime.strptime(request.time,'%H:%M:%S').time())
+        self.time_diff = (future_datetime-datetime.utcnow())/timedelta(milliseconds=1)
+        print("New UTC time:", datetime.utcnow()+timedelta(milliseconds=self.time_diff))
+        return tictactoe_pb2.SetTimeResponse(time_accepted=True)
 
     def sync_time(self):
         # Node 2 time
@@ -331,9 +339,21 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
             print("New UTC time:", datetime.utcnow()+timedelta(milliseconds=self.time_diff))
         elif self.amITheLeader:
             if self.node2name == node_name:
-                print("There")
+                try:
+                    with grpc.insecure_channel(self.node2) as channel:
+                        stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
+                        response = stub.ReceiveTimeString(tictactoe_pb2.SetTimeString(time=time))
+                        print(self.node2name,'accepted:', response.time_accepted)
+                except:
+                    raise ConnectionError('{} missing'.format(self.node2name))
             elif self.node3name == node_name:
-                print("Not there")
+                try:
+                    with grpc.insecure_channel(self.node3) as channel:
+                        stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
+                        response = stub.ReceiveTimeString(tictactoe_pb2.SetTimeString(time=time))
+                        print(self.node3name,'accepted:', response.time_accepted)
+                except:
+                    raise ConnectionError('{} missing'.format(self.node3name))
             else:
                 print(node_name, "is not a valid node name.")
         else:

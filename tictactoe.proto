@@ -4,6 +4,7 @@ service TicTacToe {
     rpc Ack(AckRequest) returns (AckResponse) {}
     rpc Time(TimeRequest) returns (TimeResponse) {}
     rpc ReceiveTime(SetTime) returns (SetTimeResponse) {}
+    rpc ReceiveTimeString(SetTimeString) returns(SetTimeResponse) {}
     rpc Move(MoveRequest) returns (MoveResponse) {}
     rpc Election(ElectionMessage) returns (ElectionResponse) {}
     rpc Coordinator(CoordinatorMessage) returns (ElectionResponse) {}
@@ -24,6 +25,10 @@ message TimeResponse {
 
 message SetTime {
     float time_diff = 1;
+}
+
+message SetTimeString {
+    string time = 1;
 }
 
 message SetTimeResponse {
