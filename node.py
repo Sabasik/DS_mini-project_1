@@ -177,7 +177,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
     def MakeAMove(self, tile):
         pass
 
-    def selectLeader(self):
+    def select_leader(self):
         if self.name > self.node2name and self.name > self.node3name:
             self.amITheLeader = True
             print("I am the leader.")
