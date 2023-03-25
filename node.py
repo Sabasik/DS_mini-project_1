@@ -15,6 +15,9 @@ pattern_start_game = re.compile("Start-game")
 pattern_set_node_time = re.compile("Set-node-time (.*) (\d\d:\d\d:\d\d)")
 pattern_set_time_out = re.compile("Set-time-out (players|game-master) (\d+(\.\d*)?)")
 
+player_1_symbol = "X"
+player_2_symbol = "O"
+
 def print_help():
     print("""
     This is a TicTacToe node.
@@ -107,6 +110,10 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         self.time_diff = 0
 
         self.game_board = None
+        self.turn = None
+        self.player_1 = None
+        self.player_2 = None
+        self.hasGameStarted = False
 
     def Ack(self, request, context):
         return tictactoe_pb2.AckResponse(name=self.name, id=self.id)
@@ -289,10 +296,33 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         return tictactoe_pb2.ElectionResponse(acknowledgement=True)
 
     def Move(self, request, context):
-        pass
-    
-    def MakeAMove(self, tile):
-        pass
+        if request.player_id != self.turn:
+            return tictactoe_pb2.MoveResponse(
+                success=False, 
+                fail_message="It is the other player's turn!")
+        elif (request.player_id == self.player_1 and request.symbol != player_1_symbol):
+            return tictactoe_pb2.MoveResponse(
+                success=False, 
+                fail_message="You can't set symbol {}! Your symbol is {}.".format(request.symbol, player_1_symbol))
+        elif (request.player_id == self.player_2 and request.symbol != player_2_symbol):
+            return tictactoe_pb2.MoveResponse(
+                success=False, 
+                fail_message="You can't set symbol {}! Your symbol is {}.".format(request.symbol, player_2_symbol))
+        elif self.game_board[request.tile-1] != " ":
+            return tictactoe_pb2.MoveResponse(
+                success=False, 
+                fail_message="Tile {} is already filled with {}.".format(request.tile, self.game_board[request.tile-1]))
+        else:
+            self.game_board[request.tile-1] = request.symbol
+            if self.turn == self.player_1:
+                self.turn = self.player_2
+            else:
+                self.turn = self.player_1
+            print("{} set at {}.".format(request.symbol,request.tile))
+            return tictactoe_pb2.MoveResponse(
+                success=True, 
+                fail_message="Success!")
+            
 
     def GetGameBoard(self, request, context):
         if self.game_board:
@@ -330,6 +360,33 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
 
     def set_symbol(self, position, symbol):
         print("Set symbol",symbol, position)
+        if self.coordinator == self.id:
+            print("Game master cannot set symbols!")
+        else:
+            if self.coordinator == self.node2id:
+                try:
+                    with grpc.insecure_channel(self.node2) as channel:
+                        stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
+                        response = stub.Move(tictactoe_pb2.MoveRequest(
+                            tile = position, 
+                            symbol=symbol, 
+                            player_id=self.id))
+                except:
+                    raise ConnectionError('{} missing'.format(self.node2name))
+            else:
+                try:
+                    with grpc.insecure_channel(self.node3) as channel:
+                        stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
+                        response = stub.Move(tictactoe_pb2.MoveRequest(
+                            tile = position, 
+                            symbol=symbol, 
+                            player_id=self.id))
+                except:
+                    raise ConnectionError('{} missing'.format(self.node3name))
+            if response.success:
+                print("Move accepted!")
+            else:
+                print(response.fail_message)
     
     def list_board(self):
         if self.coordinator == self.id:
@@ -395,6 +452,14 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
 
     def init_game(self):
         self.game_board = tictactoe.blank_board_list()
+        random_bit = random.randint(0,1)
+        if random_bit == 0:
+            self.player_1 = self.node2id
+            self.player_2 = self.node3id
+        else:
+            self.player_1 = self.node3id
+            self.player_2 = self.node2id
+        self.turn = self.player_1
     
 
 

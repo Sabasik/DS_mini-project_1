@@ -103,16 +103,17 @@ def print_board_list(board_list):
         el.append(item if item in ['X', 'O'] else "empty")
     return ", ".join(el)
 
-b = blank_board()
-letters = {True: "X", False: "O"}
-X = True
-while not is_filled(b):
-    success, b = add_element(b, random.randint(1, 9), letters[X])
-    if success:
-        X = not X
-        end, result = check_end(b)
-        if end:
-            print(get_result(result))
-            break
-for r in b:
-    print(r)
+def main():
+    b = blank_board()
+    letters = {True: "X", False: "O"}
+    X = True
+    while not is_filled(b):
+        success, b = add_element(b, random.randint(1, 9), letters[X])
+        if success:
+            X = not X
+            end, result = check_end(b)
+            if end:
+                print(get_result(result))
+                break
+    for r in b:
+        print(r)

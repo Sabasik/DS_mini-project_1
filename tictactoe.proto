@@ -50,10 +50,13 @@ message CoordinatorMessage {
 
 message MoveRequest {
     int32 tile = 1;
+    int32 player_id = 2;
+    string symbol = 3;
 }
 
 message MoveResponse {
     bool success = 1;
+    string fail_message = 2;
 }
 
 message BoardRequest {}
