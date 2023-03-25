@@ -58,8 +58,12 @@ message MoveResponse {
 
 message BoardRequest {}
 
+message InternalArray {
+    repeated string internal_array = 1;
+}
+
 message BoardResponse {
-    repeated string board = 1;
+    repeated InternalArray board = 1;
     bool success = 2;
 }
 
