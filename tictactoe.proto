@@ -60,7 +60,8 @@ message BoardRequest {}
 
 message BoardResponse {
     repeated string board = 1;
-    bool success = 2;
+    string timestamp = 2;
+    bool success = 3;
 }
 
 message Empty {}

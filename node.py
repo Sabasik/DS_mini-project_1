@@ -296,8 +296,14 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
 
     def GetGameBoard(self, request, context):
         if self.game_board:
-            return tictactoe_pb2.BoardResponse(board=self.game_board, success=True)
-        return tictactoe_pb2.BoardResponse(board=self.game_board, success=False)
+            return tictactoe_pb2.BoardResponse(
+                board=self.game_board, 
+                timestamp = str(datetime.utcnow() + timedelta(milliseconds=self.time_diff)), 
+                success=True)
+        return tictactoe_pb2.BoardResponse(
+            board=self.game_board, 
+            timestamp = str(datetime.utcnow() + timedelta(milliseconds=self.time_diff)), 
+            success=False)
 
     def process_command(self, command):
         m = pattern_set_symbol.match(command)
@@ -326,30 +332,25 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         print("Set symbol",symbol, position)
     
     def list_board(self):
-        if self.game_board:
-            game_board = self.game_board
-        else:
+        response = self.GetGameBoard(tictactoe_pb2.BoardRequest(),None)
+        if not response.success:
             try:
                 with grpc.insecure_channel(self.node2) as channel:
                     stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
                     response = stub.GetGameBoard(tictactoe_pb2.BoardRequest())
-                    success = response.success
-                    game_board = response.board
             except:
                 raise ConnectionError('{} missing'.format(self.node2name))
-            if not success:
+            if not response.success:
                 try:
                     with grpc.insecure_channel(self.node3) as channel:
                         stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
                         response = stub.GetGameBoard(tictactoe_pb2.BoardRequest())
-                        success = response.success
-                        game_board = response.board
                 except:
                     raise ConnectionError('{} missing'.format(self.node3name))
-            if not success:
+            if not response.success:
                 print("No board found :(")
                 return
-        print(datetime.utcnow() + timedelta(milliseconds=self.time_diff),',',tictactoe.print_board_list(game_board))
+        print(response.timestamp,',',tictactoe.print_board_list(response.board))
     
     def set_node_time(self, node_name, time):
         print("Set node time",node_name,time)
