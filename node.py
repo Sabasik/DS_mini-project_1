@@ -349,7 +349,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
             if not success:
                 print("No board found :(")
                 return
-        print(datetime.utcnow + timedelta(milliseconds=self.time_diff),',',tictactoe.print_board_list(game_board))
+        print(datetime.utcnow() + timedelta(milliseconds=self.time_diff),',',tictactoe.print_board_list(game_board))
     
     def set_node_time(self, node_name, time):
         print("Set node time",node_name,time)
