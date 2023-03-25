@@ -332,14 +332,16 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         print("Set symbol",symbol, position)
     
     def list_board(self):
-        response = self.GetGameBoard(tictactoe_pb2.BoardRequest(),None)
-        if not response.success:
+        if self.coordinator == self.id:
+            response = self.GetGameBoard(tictactoe_pb2.BoardRequest(),None)
+        elif self.coordinator == self.node2id:
             try:
                 with grpc.insecure_channel(self.node2) as channel:
                     stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
                     response = stub.GetGameBoard(tictactoe_pb2.BoardRequest())
             except:
                 raise ConnectionError('{} missing'.format(self.node2name))
+        elif self.coordinator == self.node3id:
             if not response.success:
                 try:
                     with grpc.insecure_channel(self.node3) as channel:
@@ -347,10 +349,10 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
                         response = stub.GetGameBoard(tictactoe_pb2.BoardRequest())
                 except:
                     raise ConnectionError('{} missing'.format(self.node3name))
-            if not response.success:
-                print("No board found :(")
-                return
-        print(response.timestamp,',',tictactoe.print_board_list(response.board))
+        if not response.success:
+            print("No board found :(")
+        else:
+            print(response.timestamp,',',tictactoe.print_board_list(response.board))
     
     def set_node_time(self, node_name, time):
         print("Set node time",node_name,time)
