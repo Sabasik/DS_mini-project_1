@@ -267,7 +267,7 @@ def serve():
         while True:
             # TODO: game loop stuff
             user_command = input('{}>'.format(name))
-            server.process_command(user_command)
+            servicer.process_command(user_command)
     except KeyboardInterrupt:
         server.stop(0)
 
