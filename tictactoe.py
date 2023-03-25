@@ -95,7 +95,7 @@ def list_to_matrix(board_list):
 
 
 def blank_board_list():
-    return matrix_to_list(blank_board)
+    return matrix_to_list(blank_board())
 
 def print_board_list(board_list):
     el = []
