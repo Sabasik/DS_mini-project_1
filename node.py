@@ -162,6 +162,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         future_datetime = datetime.combine(current_datetime.date(),datetime.strptime(request.time,'%H:%M:%S').time())
         self.time_diff = (future_datetime-datetime.utcnow())/timedelta(milliseconds=1)
         print("New UTC time:", datetime.utcnow()+timedelta(milliseconds=self.time_diff))
+        self.print_node_name()
         return tictactoe_pb2.SetTimeResponse(time_accepted=True)
 
     def sync_time(self):
@@ -365,6 +366,10 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
     
     def start_game(self):
         print("Start game")
+
+    def print_node_name(self):
+        print('{}>'.format(self.name),end="")
+    
 
 
 
