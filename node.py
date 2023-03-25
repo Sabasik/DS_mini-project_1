@@ -3,8 +3,15 @@ import grpc
 import tictactoe_pb2
 import tictactoe_pb2_grpc
 import time
+import re
 from concurrent import futures
 from datetime import datetime, timedelta
+
+pattern_set_symbol = re.compile("Set-symbol (\d), ([OX])")
+pattern_list_board = re.compile("List-board")
+pattern_start_game = re.compile("Start-game")
+pattern_set_node_time = re.compile("Set-node-time (.*) (\d\d:\d\d:\d\d)")
+pattern_set_time_out = re.compile("Set-time-out (players|game-master) (\d(.\d*)?)")
 
 def print_help():
     print("""
@@ -183,6 +190,44 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
             print("I am the leader.")
         else:
             print("I am not the leader.")
+    
+    def process_command(self, command):
+        m = pattern_set_symbol.match(command)
+        if m:
+            self.set_symbol(int(m.group(1)),m.group(2))
+            return
+        m = pattern_list_board.match(command)
+        if m:
+            self.list_board()
+            return
+        m = pattern_set_node_time.match(command)
+        if m:
+            self.set_node_time(m.group(1),m.group(2))
+            return
+        m = pattern_set_time_out.match(command)
+        if m:
+            self.set_time_out(m.group(1),float(m.group(2)))
+            return
+        m = pattern_start_game.match(command)
+        if m:
+            self.start_game()
+            return
+
+    def set_symbol(self, position, symbol):
+        print("Set symbol",symbol, position)
+    
+    def list_board(self):
+        print("List board")
+    
+    def set_node_time(self, node_name, time):
+        print("Set node time",node_name,time)
+    
+    def set_time_out(self, role, time):
+        print("Set time-out",role,time)
+    
+    def start_game(self):
+        print("Start game")
+
 
 
 def serve():
@@ -222,6 +267,7 @@ def serve():
         while True:
             # TODO: game loop stuff
             user_command = input('{}>'.format(name))
+            server.process_command(user_command)
     except KeyboardInterrupt:
         server.stop(0)
 
