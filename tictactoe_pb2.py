@@ -13,7 +13,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0ftictactoe.proto\"\x0c\n\nAckRequest\"\x1b\n\x0b\x41\x63kResponse\x12\x0c\n\x04name\x18\x01 \x01(\t\"\r\n\x0bTimeRequest\"\x1c\n\x0cTimeResponse\x12\x0c\n\x04time\x18\x01 \x01(\t\"\x1c\n\x07SetTime\x12\x11\n\ttime_diff\x18\x01 \x01(\x02\"(\n\x0fSetTimeResponse\x12\x15\n\rtime_accepted\x18\x01 \x01(\x08\"\x1b\n\x0bMoveRequest\x12\x0c\n\x04tile\x18\x01 \x01(\x05\"\x1f\n\x0cMoveResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\"\x07\n\x05\x45mpty2\xaa\x01\n\tTicTacToe\x12\"\n\x03\x41\x63k\x12\x0b.AckRequest\x1a\x0c.AckResponse\"\x00\x12%\n\x04Time\x12\x0c.TimeRequest\x1a\r.TimeResponse\"\x00\x12+\n\x0bReceiveTime\x12\x08.SetTime\x1a\x10.SetTimeResponse\"\x00\x12%\n\x04Move\x12\x0c.MoveRequest\x1a\r.MoveResponse\"\x00\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0ftictactoe.proto\"\x0c\n\nAckRequest\"\'\n\x0b\x41\x63kResponse\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\n\n\x02id\x18\x02 \x01(\x05\"\r\n\x0bTimeRequest\"\x1c\n\x0cTimeResponse\x12\x0c\n\x04time\x18\x01 \x01(\t\"\x1c\n\x07SetTime\x12\x11\n\ttime_diff\x18\x01 \x01(\x02\"(\n\x0fSetTimeResponse\x12\x15\n\rtime_accepted\x18\x01 \x01(\x08\"\x1d\n\x0f\x45lectionMessage\x12\n\n\x02id\x18\x01 \x01(\x05\"+\n\x10\x45lectionResponse\x12\x17\n\x0f\x61\x63knowledgement\x18\x01 \x01(\x08\",\n\x12\x43oordinatorMessage\x12\x16\n\x0e\x63oordinator_id\x18\x01 \x01(\x05\"\x1b\n\x0bMoveRequest\x12\x0c\n\x04tile\x18\x01 \x01(\x05\"\x1f\n\x0cMoveResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\"\x07\n\x05\x45mpty2\x96\x02\n\tTicTacToe\x12\"\n\x03\x41\x63k\x12\x0b.AckRequest\x1a\x0c.AckResponse\"\x00\x12%\n\x04Time\x12\x0c.TimeRequest\x1a\r.TimeResponse\"\x00\x12+\n\x0bReceiveTime\x12\x08.SetTime\x1a\x10.SetTimeResponse\"\x00\x12%\n\x04Move\x12\x0c.MoveRequest\x1a\r.MoveResponse\"\x00\x12\x31\n\x08\x45lection\x12\x10.ElectionMessage\x1a\x11.ElectionResponse\"\x00\x12\x37\n\x0b\x43oordinator\x12\x13.CoordinatorMessage\x1a\x11.ElectionResponse\"\x00\x62\x06proto3')
 
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, globals())
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'tictactoe_pb2', globals())
@@ -23,21 +23,27 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   _ACKREQUEST._serialized_start=19
   _ACKREQUEST._serialized_end=31
   _ACKRESPONSE._serialized_start=33
-  _ACKRESPONSE._serialized_end=60
-  _TIMEREQUEST._serialized_start=62
-  _TIMEREQUEST._serialized_end=75
-  _TIMERESPONSE._serialized_start=77
-  _TIMERESPONSE._serialized_end=105
-  _SETTIME._serialized_start=107
-  _SETTIME._serialized_end=135
-  _SETTIMERESPONSE._serialized_start=137
-  _SETTIMERESPONSE._serialized_end=177
-  _MOVEREQUEST._serialized_start=179
-  _MOVEREQUEST._serialized_end=206
-  _MOVERESPONSE._serialized_start=208
-  _MOVERESPONSE._serialized_end=239
-  _EMPTY._serialized_start=241
-  _EMPTY._serialized_end=248
-  _TICTACTOE._serialized_start=251
-  _TICTACTOE._serialized_end=421
+  _ACKRESPONSE._serialized_end=72
+  _TIMEREQUEST._serialized_start=74
+  _TIMEREQUEST._serialized_end=87
+  _TIMERESPONSE._serialized_start=89
+  _TIMERESPONSE._serialized_end=117
+  _SETTIME._serialized_start=119
+  _SETTIME._serialized_end=147
+  _SETTIMERESPONSE._serialized_start=149
+  _SETTIMERESPONSE._serialized_end=189
+  _ELECTIONMESSAGE._serialized_start=191
+  _ELECTIONMESSAGE._serialized_end=220
+  _ELECTIONRESPONSE._serialized_start=222
+  _ELECTIONRESPONSE._serialized_end=265
+  _COORDINATORMESSAGE._serialized_start=267
+  _COORDINATORMESSAGE._serialized_end=311
+  _MOVEREQUEST._serialized_start=313
+  _MOVEREQUEST._serialized_end=340
+  _MOVERESPONSE._serialized_start=342
+  _MOVERESPONSE._serialized_end=373
+  _EMPTY._serialized_start=375
+  _EMPTY._serialized_end=382
+  _TICTACTOE._serialized_start=385
+  _TICTACTOE._serialized_end=663
 # @@protoc_insertion_point(module_scope)

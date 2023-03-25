@@ -5,12 +5,15 @@ service TicTacToe {
     rpc Time(TimeRequest) returns (TimeResponse) {}
     rpc ReceiveTime(SetTime) returns (SetTimeResponse) {}
     rpc Move(MoveRequest) returns (MoveResponse) {}
+    rpc Election(ElectionMessage) returns (ElectionResponse) {}
+    rpc Coordinator(CoordinatorMessage) returns (ElectionResponse) {}
 }
 
 message AckRequest {}
 
 message AckResponse {
     string name = 1;
+    int32 id = 2;
 }
 
 message TimeRequest {}
@@ -25,6 +28,18 @@ message SetTime {
 
 message SetTimeResponse {
     bool time_accepted = 1;
+}
+
+message ElectionMessage {
+    int32 id = 1;
+}
+
+message ElectionResponse {
+    bool acknowledgement = 1;
+}
+
+message CoordinatorMessage {
+    int32 coordinator_id = 1;
 }
 
 message MoveRequest {
