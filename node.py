@@ -83,6 +83,8 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
 
         self.time_diff = None
 
+        self.amITheLeader = False
+
     def Ack(self, request, context):
         return tictactoe_pb2.AckResponse(name=self.name)
 
@@ -175,6 +177,13 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
     def MakeAMove(self, tile):
         pass
 
+    def selectLeader(self):
+        if self.name > self.node2name and self.name > self.node3name:
+            self.amITheLeader = True
+            print("I am the leader.")
+        else:
+            print("I am not the leader.")
+
 
 def serve():
     if array_index(sys.argv, '--help') != -1:
@@ -206,6 +215,7 @@ def serve():
     servicer.sync_time()
 
     # TODO: leader election
+    servicer.select_leader()
 
     # Game loop
     try:
