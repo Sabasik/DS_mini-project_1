@@ -113,7 +113,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         self.turn = None
         self.player_1 = None
         self.player_2 = None
-        self.hasGameStarted = False
+        self.has_game_started = False
 
     def Ack(self, request, context):
         return tictactoe_pb2.AckResponse(name=self.name, id=self.id)
@@ -323,6 +323,10 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
                 success=True, 
                 fail_message="Success!")
             
+    def UpdatePlayers(self, request, context):
+        self.has_game_started = request.has_game_started
+        print(request.update_message)
+        return tictactoe_pb2.Empty()
 
     def GetGameBoard(self, request, context):
         if self.game_board:
@@ -455,10 +459,51 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         if random_bit == 0:
             self.player_1 = self.node2id
             self.player_2 = self.node3id
+            try:
+                with grpc.insecure_channel(self.node2) as channel:
+                    stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
+                    response = stub.UpdatePlayers(tictactoe_pb2.UpdateMessage(
+                        update_message = 'You are player 1 and using symbol ' + player_1_symbol + ". It's your turn!",
+                        has_game_started = True
+                    ))
+                    print(self.node3name,'accepted:', response.time_accepted)
+            except:
+                raise ConnectionError('{} missing'.format(self.node2name))
+            try:
+                with grpc.insecure_channel(self.node3) as channel:
+                    stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
+                    response = stub.UpdatePlayers(tictactoe_pb2.UpdateMessage(
+                        update_message = 'You are player 2 and using symbol ' + player_2_symbol,
+                        has_game_started = True
+                    ))
+                    print(self.node3name,'accepted:', response.time_accepted)
+            except:
+                raise ConnectionError('{} missing'.format(self.node3name))
         else:
             self.player_1 = self.node3id
             self.player_2 = self.node2id
+            try:
+                with grpc.insecure_channel(self.node3) as channel:
+                    stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
+                    response = stub.UpdatePlayers(tictactoe_pb2.UpdateMessage(
+                        update_message = 'You are player 1 and using symbol ' + player_1_symbol + ". It's your turn!",
+                        has_game_started = True
+                    ))
+                    print(self.node3name,'accepted:', response.time_accepted)
+            except:
+                raise ConnectionError('{} missing'.format(self.node3name))
+            try:
+                with grpc.insecure_channel(self.node2) as channel:
+                    stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
+                    response = stub.UpdatePlayers(tictactoe_pb2.UpdateMessage(
+                        update_message = 'You are player 2 and using symbol ' + player_2_symbol,
+                        has_game_started = True
+                    ))
+                    print(self.node3name,'accepted:', response.time_accepted)
+            except:
+                raise ConnectionError('{} missing'.format(self.node2name))
         self.turn = self.player_1
+        self.has_game_started = True
     
 
 
