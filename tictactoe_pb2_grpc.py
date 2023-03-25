@@ -27,7 +27,7 @@ class TicTacToeStub(object):
         self.ReceiveTime = channel.unary_unary(
                 '/TicTacToe/ReceiveTime',
                 request_serializer=tictactoe__pb2.SetTime.SerializeToString,
-                response_deserializer=tictactoe__pb2.Empty.FromString,
+                response_deserializer=tictactoe__pb2.SetTimeResponse.FromString,
                 )
         self.Move = channel.unary_unary(
                 '/TicTacToe/Move',
@@ -79,7 +79,7 @@ def add_TicTacToeServicer_to_server(servicer, server):
             'ReceiveTime': grpc.unary_unary_rpc_method_handler(
                     servicer.ReceiveTime,
                     request_deserializer=tictactoe__pb2.SetTime.FromString,
-                    response_serializer=tictactoe__pb2.Empty.SerializeToString,
+                    response_serializer=tictactoe__pb2.SetTimeResponse.SerializeToString,
             ),
             'Move': grpc.unary_unary_rpc_method_handler(
                     servicer.Move,
@@ -143,7 +143,7 @@ class TicTacToe(object):
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/TicTacToe/ReceiveTime',
             tictactoe__pb2.SetTime.SerializeToString,
-            tictactoe__pb2.Empty.FromString,
+            tictactoe__pb2.SetTimeResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

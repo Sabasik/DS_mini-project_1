@@ -13,7 +13,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0ftictactoe.proto\"\x0c\n\nAckRequest\"\x1b\n\x0b\x41\x63kResponse\x12\x0c\n\x04name\x18\x01 \x01(\t\"\r\n\x0bTimeRequest\"\x1c\n\x0cTimeResponse\x12\x0c\n\x04time\x18\x01 \x01(\t\"\x1c\n\x07SetTime\x12\x11\n\ttime_diff\x18\x01 \x01(\x05\"\x1b\n\x0bMoveRequest\x12\x0c\n\x04tile\x18\x01 \x01(\x05\"\x1f\n\x0cMoveResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\"\x07\n\x05\x45mpty2\xa0\x01\n\tTicTacToe\x12\"\n\x03\x41\x63k\x12\x0b.AckRequest\x1a\x0c.AckResponse\"\x00\x12%\n\x04Time\x12\x0c.TimeRequest\x1a\r.TimeResponse\"\x00\x12!\n\x0bReceiveTime\x12\x08.SetTime\x1a\x06.Empty\"\x00\x12%\n\x04Move\x12\x0c.MoveRequest\x1a\r.MoveResponse\"\x00\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0ftictactoe.proto\"\x0c\n\nAckRequest\"\x1b\n\x0b\x41\x63kResponse\x12\x0c\n\x04name\x18\x01 \x01(\t\"\r\n\x0bTimeRequest\"\x1c\n\x0cTimeResponse\x12\x0c\n\x04time\x18\x01 \x01(\t\"\x1c\n\x07SetTime\x12\x11\n\ttime_diff\x18\x01 \x01(\x02\"(\n\x0fSetTimeResponse\x12\x15\n\rtime_accepted\x18\x01 \x01(\x08\"\x1b\n\x0bMoveRequest\x12\x0c\n\x04tile\x18\x01 \x01(\x05\"\x1f\n\x0cMoveResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\"\x07\n\x05\x45mpty2\xaa\x01\n\tTicTacToe\x12\"\n\x03\x41\x63k\x12\x0b.AckRequest\x1a\x0c.AckResponse\"\x00\x12%\n\x04Time\x12\x0c.TimeRequest\x1a\r.TimeResponse\"\x00\x12+\n\x0bReceiveTime\x12\x08.SetTime\x1a\x10.SetTimeResponse\"\x00\x12%\n\x04Move\x12\x0c.MoveRequest\x1a\r.MoveResponse\"\x00\x62\x06proto3')
 
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, globals())
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'tictactoe_pb2', globals())
@@ -30,12 +30,14 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   _TIMERESPONSE._serialized_end=105
   _SETTIME._serialized_start=107
   _SETTIME._serialized_end=135
-  _MOVEREQUEST._serialized_start=137
-  _MOVEREQUEST._serialized_end=164
-  _MOVERESPONSE._serialized_start=166
-  _MOVERESPONSE._serialized_end=197
-  _EMPTY._serialized_start=199
-  _EMPTY._serialized_end=206
-  _TICTACTOE._serialized_start=209
-  _TICTACTOE._serialized_end=369
+  _SETTIMERESPONSE._serialized_start=137
+  _SETTIMERESPONSE._serialized_end=177
+  _MOVEREQUEST._serialized_start=179
+  _MOVEREQUEST._serialized_end=206
+  _MOVERESPONSE._serialized_start=208
+  _MOVERESPONSE._serialized_end=239
+  _EMPTY._serialized_start=241
+  _EMPTY._serialized_end=248
+  _TICTACTOE._serialized_start=251
+  _TICTACTOE._serialized_end=421
 # @@protoc_insertion_point(module_scope)

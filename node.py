@@ -81,6 +81,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         self.node2name = None
         self.node3name = None
 
+        self.received_diff = False
         self.time_diff = None
 
     def Ack(self, request, context):
@@ -123,10 +124,14 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         return tictactoe_pb2.TimeResponse(time=time)
     
     def ReceiveTime(self, request, context):
-        pass
+        if self.received_diff:
+            return tictactoe_pb2.SetTimeResponse(time_accepted=False)
+        print('{} received time diff {}'.format(self.name, request.time_diff))
+        self.received_diff = True
+        self.time_diff = request.time_diff
+        return tictactoe_pb2.SetTimeResponse(time_accepted=True)
 
     def sync_time(self):
-        # Maybe it would be better to use UNIX timestamps???
         # Node 2 time
         try:
             with grpc.insecure_channel(self.node2) as channel:
@@ -137,9 +142,9 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
                 current_local_time = datetime.utcnow()
 
                 rtt = request_end - request_start
-                estimated_current_time = datetime.strptime(response.time, "%Y-%m-%d %H:%M:%S.%fZ") + timedelta(seconds=(rtt / 2))
+                estimated_node2_time = datetime.strptime(response.time, "%Y-%m-%d %H:%M:%S.%fZ") + timedelta(seconds=(rtt / 2))
 
-                node2_time_diff = current_local_time - estimated_current_time
+                node2_time_diff = -(current_local_time - estimated_node2_time)
         except:            
             raise ConnectionError('{} missing'.format(self.node2name))
         
@@ -153,15 +158,39 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
                 current_local_time = datetime.utcnow()
 
                 rtt = request_end - request_start
-                estimated_current_time = datetime.strptime(response.time, "%Y-%m-%d %H:%M:%S.%fZ") + timedelta(seconds=(rtt / 2))
+                estimated_node3_time = datetime.strptime(response.time, "%Y-%m-%d %H:%M:%S.%fZ") + timedelta(seconds=(rtt / 2))
 
-                node3_time_diff = current_local_time - estimated_current_time
+                node3_time_diff = -(current_local_time - estimated_node3_time)
         except:
             raise ConnectionError('{} missing'.format(self.node3name))
         
-        # TODO: continue from here (first to calculate time sets it for others)
-        current_time = datetime.utcnow()
-        print()        
+        local_time_diff = (node3_time_diff + node2_time_diff) / 3
+        node2_time_diff = -(node2_time_diff - local_time_diff) / timedelta(milliseconds=1)
+        node3_time_diff = -(node3_time_diff - local_time_diff) / timedelta(milliseconds=1)
+        local_time_diff = local_time_diff / timedelta(milliseconds=1)
+        if not self.received_diff:
+            print('{} is sending time information'.format(self.name))
+            try:
+                with grpc.insecure_channel(self.node2) as channel:
+                    stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
+                    response = stub.ReceiveTime(tictactoe_pb2.SetTime(time_diff=node2_time_diff))
+                    node2_accepted = response.time_accepted
+                    print('Node2 accepted: ', response.time_accepted)
+            except:
+                raise ConnectionError('{} missing'.format(self.node2name))
+            
+            if node2_accepted:
+                try:
+                    with grpc.insecure_channel(self.node3) as channel:
+                        stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
+                        response = stub.ReceiveTime(tictactoe_pb2.SetTime(time_diff=node3_time_diff))
+                        node3_accepted = response.time_accepted
+                        print('Node3 accepted: ', response.time_accepted)
+                except:
+                    raise ConnectionError('{} missing'.format(self.node3name))
+            
+            if node2_accepted and node3_accepted:
+                self.time_diff = local_time_diff
 
     def start_election(self):
         pass

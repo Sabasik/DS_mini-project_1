@@ -3,7 +3,7 @@ syntax = "proto3";
 service TicTacToe {
     rpc Ack(AckRequest) returns (AckResponse) {}
     rpc Time(TimeRequest) returns (TimeResponse) {}
-    rpc ReceiveTime(SetTime) returns (Empty) {}
+    rpc ReceiveTime(SetTime) returns (SetTimeResponse) {}
     rpc Move(MoveRequest) returns (MoveResponse) {}
 }
 
@@ -20,7 +20,11 @@ message TimeResponse {
 }
 
 message SetTime {
-    int32 time_diff = 1;
+    float time_diff = 1;
+}
+
+message SetTimeResponse {
+    bool time_accepted = 1;
 }
 
 message MoveRequest {
