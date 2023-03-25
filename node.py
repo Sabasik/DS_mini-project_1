@@ -399,13 +399,12 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
             except:
                 raise ConnectionError('{} missing'.format(self.node2name))
         elif self.coordinator == self.node3id:
-            if not response.success:
-                try:
-                    with grpc.insecure_channel(self.node3) as channel:
-                        stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
-                        response = stub.GetGameBoard(tictactoe_pb2.BoardRequest())
-                except:
-                    raise ConnectionError('{} missing'.format(self.node3name))
+            try:
+                with grpc.insecure_channel(self.node3) as channel:
+                    stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
+                    response = stub.GetGameBoard(tictactoe_pb2.BoardRequest())
+            except:
+                raise ConnectionError('{} missing'.format(self.node3name))
         if not response.success:
             print("No board found :(")
         else:
