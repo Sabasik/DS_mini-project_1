@@ -4,6 +4,7 @@ import tictactoe_pb2
 import tictactoe_pb2_grpc
 import time
 import re
+import random
 from concurrent import futures
 from datetime import datetime, timedelta
 
@@ -58,6 +59,14 @@ def node_name(args):
         return element_or_default(args, name_index, default_name)
     return default_name
 
+def node_id(args):
+    default_id = random.randint(1, 4000)
+
+    id_index = array_index(args, '-i') + 1
+    if id_index != 0:
+        return int(element_or_default(args, id_index, default_id))
+    return default_id
+
 
 def other_nodes(args):
     node2_index = array_index(args, '-node2')
@@ -79,8 +88,10 @@ def other_nodes(args):
     return node2_value, node3_value
 
 class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
-    def __init__(self, name, node2, node3):
+    def __init__(self, id, name, node2, node3):
+        self.id = id
         self.name = name
+        self.coordinator = None
 
         self.node2 = node2
         self.node3 = node3
@@ -88,13 +99,16 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         self.node2name = None
         self.node3name = None
 
+        self.node2id = None
+        self.node3id= None
+
         self.received_diff = False
         self.time_diff = None
 
         self.amITheLeader = False
 
     def Ack(self, request, context):
-        return tictactoe_pb2.AckResponse(name=self.name)
+        return tictactoe_pb2.AckResponse(name=self.name, id=self.id)
 
     def wait_for_others(self):
         while True:
@@ -105,6 +119,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
                         response = stub.Ack(tictactoe_pb2.AckRequest())
 
                         self.node2name = response.name
+                        self.node2id = response.id
 
                         print('Node2 ({}) is ready'.format(self.node2name))
                 except:
@@ -117,6 +132,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
                         response = stub.Ack(tictactoe_pb2.AckRequest())
 
                         self.node3name = response.name
+                        self.node3id = response.id
 
                         print('Node3 ({}) is ready'.format(self.node3name))
                 except:
@@ -201,11 +217,67 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
             if node2_accepted and node3_accepted:
                 self.time_diff = local_time_diff
 
-    def start_election(self):
-        pass
+    def send_coordinator_message(self, target_node, target_name):
+        try:
+            with grpc.insecure_channel(target_node) as channel:
+                stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
+                _ = stub.Coordinator(tictactoe_pb2.CoordinatorMessage(coordinator_id=self.id))
+        except:            
+            raise ConnectionError('{} missing'.format(target_name))
 
-    def participate_election(self):
-        pass
+    def send_election_message(self, target_node, target_name):
+        try:
+            with grpc.insecure_channel(target_node) as channel:
+                stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
+                response = stub.Election(tictactoe_pb2.ElectionMessage(id=self.id))
+                node_status = response.acknowledgement
+        except:            
+            raise ConnectionError('{} missing'.format(target_name))
+        return node_status
+
+    # Election is implemented with Bullying algorithm
+    def start_election(self):
+        # Send Victory message immediately
+        if self.id > self.node2id and self.id > self.node3id:
+            self.send_coordinator_message(self.node2, self.node2name)
+            self.send_coordinator_message(self.node3, self.node2name)
+            
+            self.coordinator = self.id
+
+        # Check if nodes with higher id are available
+        elif self.id < self.node2id and self.id < self.node3id:
+            node2_status = self.send_election_message(self.node2, self.node2name)
+            node3_status = self.send_election_message(self.node3, self.node3name)
+            
+            if not (node2_status or node3_status):
+                self.coordinator = self.id
+            
+        # Check if node 2 is available
+        elif self.id < self.node2id:
+            node2_status = self.send_election_message(self.node2, self.node2name)
+            
+            if not (node2_status):
+                self.send_coordinator_message(self.node3, self.node3name)
+
+                self.coordinator = self.id
+
+        # Check if node 3 is available
+        else:
+            node3_status = self.send_election_message(self.node3, self.node3name)
+            
+            if not (node3_status):
+                self.send_coordinator_message(self.node2, self.node2name)
+
+                self.coordinator = self.id
+
+    def Election(self, request, context):
+        sender_id = request.id
+        response = sender_id < self.id # OK
+        return tictactoe_pb2.ElectionResponse(acknowledgement=response)
+
+    def Coordinator(self, request, context):
+        self.coordinator = request.coordinator_id
+        return tictactoe_pb2.ElectionResponse(acknowledgement=True)
 
     def Move(self, request, context):
         pass
@@ -213,6 +285,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
     def MakeAMove(self, tile):
         pass
 
+    # TODO: Deprecated
     def select_leader(self):
         if self.name > self.node2name and self.name > self.node3name:
             self.amITheLeader = True
@@ -266,33 +339,46 @@ def serve():
         return
 
     # Server config
+    id = node_id(sys.argv)
     name = node_name(sys.argv)
     port = node_port(sys.argv)
     node2, node3 = other_nodes(sys.argv)
 
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=5))
 
-    servicer = TicTacToeServicer(name, node2, node3)
+    servicer = TicTacToeServicer(id, name, node2, node3)
     tictactoe_pb2_grpc.add_TicTacToeServicer_to_server(servicer, server)
     
     server.add_insecure_port('0.0.0.0:{}'.format(port))
     server.start()
 
-    print('Started TicTacToe node {} on port {}'.format(name, port))
+    print('Started TicTacToe node#{} {} on port {}'.format(id, name, port))
     print('Node2: {}'.format(node2))
-    print('Node3: {}'.format(node3))
+    print('Node3: {}\n'.format(node3))
 
     # Wait for other nodes to become available
     servicer.wait_for_others()
 
     # Time sync
-    print('Moved to sync time method')
     servicer.sync_time()
 
-    # TODO: leader election
-    servicer.select_leader()
+    while servicer.time_diff is None:
+        print('{} waiting for time sync...'.format(servicer.name))
+        time.sleep(0.25)
+
+    # Leader election
+    while not servicer.coordinator:
+        servicer.start_election()
+        print('Waiting for coordinator to be elected...')
+        time.sleep(0.25)
+
+    if servicer.id == servicer.coordinator:
+        # TODO: deprecated
+        servicer.amITheLeader = True
+        print('{} selected as coordinator'.format(servicer.name))
 
     # Game loop
+    print('{} setup completed. Game is ready'.format(servicer.name))
     try:
         while True:
             # TODO: game loop stuff
