@@ -8,6 +8,7 @@ service TicTacToe {
     rpc Move(MoveRequest) returns (MoveResponse) {}
     rpc Election(ElectionMessage) returns (ElectionResponse) {}
     rpc Coordinator(CoordinatorMessage) returns (ElectionResponse) {}
+    rpc GetGameBoard(BoardRequest) returns (BoardResponse) {}
 }
 
 message AckRequest {}
@@ -53,6 +54,13 @@ message MoveRequest {
 
 message MoveResponse {
     bool success = 1;
+}
+
+message BoardRequest {}
+
+message BoardResponse {
+    repeated string board = 1;
+    bool success = 2;
 }
 
 message Empty {}

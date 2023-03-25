@@ -5,6 +5,7 @@ import tictactoe_pb2_grpc
 import time
 import re
 import random
+import tictactoe
 from concurrent import futures
 from datetime import datetime, timedelta
 
@@ -293,6 +294,11 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
     def MakeAMove(self, tile):
         pass
 
+    def GetGameBoard(self, request, context):
+        if self.game_board:
+            return tictactoe_pb2.BoardResponse(board=self.game_board, success=True)
+        return tictactoe_pb2.BoardResponse(board=self.game_board, success=False)
+
     def process_command(self, command):
         m = pattern_set_symbol.match(command)
         if m:
@@ -320,7 +326,30 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         print("Set symbol",symbol, position)
     
     def list_board(self):
-        print("List board")
+        if self.game_board:
+            game_board = self.game_board
+        else:
+            try:
+                with grpc.insecure_channel(self.node2) as channel:
+                    stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
+                    response = stub.GetGameBoard(tictactoe_pb2.BoardRequest())
+                    success = response.success
+                    game_board = response.board
+            except:
+                raise ConnectionError('{} missing'.format(self.node2name))
+            if not success:
+                try:
+                    with grpc.insecure_channel(self.node3) as channel:
+                        stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
+                        response = stub.GetGameBoard(tictactoe_pb2.BoardRequest())
+                        success = response.success
+                        game_board = response.board
+                except:
+                    raise ConnectionError('{} missing'.format(self.node3name))
+            if not success:
+                print("No board found :(")
+                return
+        tictactoe.print_board(game_board)
     
     def set_node_time(self, node_name, time):
         print("Set node time",node_name,time)
@@ -360,6 +389,9 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
 
     def print_node_name(self):
         print('{}>'.format(self.name),end="")
+
+    def init_game(self):
+        self.game_board = tictactoe.blank_board()
     
 
 
@@ -404,6 +436,7 @@ def serve():
         time.sleep(0.25)
 
     if servicer.id == servicer.coordinator:
+        servicer.init_game()
         print('{} selected as coordinator'.format(servicer.name))
 
     # Game loop
