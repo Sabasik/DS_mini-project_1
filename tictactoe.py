@@ -93,6 +93,8 @@ def list_to_matrix(board_list):
             matrix[i].append(board_list[3*i+j])
     return matrix
 
+def check_end_list(board_list):
+    return check_end(list_to_matrix(board_list))
 
 def blank_board_list():
     return matrix_to_list(blank_board())

@@ -449,9 +449,59 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
     
     def start_game(self):
         print("Start game")
+        
+        # Time sync
+        self.sync_time()
+
+        while self.time_diff is None:
+            print('{} waiting for time sync...'.format(self.name))
+            time.sleep(0.25)
+
+        # Leader election
+        while not self.coordinator:
+            self.start_election()
+            print('Waiting for coordinator to be elected...')
+            time.sleep(0.25)
+
+        if self.id == self.coordinator:
+            self.init_game()
+            print('{} selected as coordinator'.format(self.name))
+
+        # Game loop
+        print('{} setup completed. Game is ready'.format(self.name))
 
     def print_node_name(self):
         print('{}>'.format(self.name),end="")
+
+    def check_end(self):
+        is_end, result = tictactoe.check_end_list(self.game_board)
+        if is_end:
+            result_text = tictactoe.get_result(result) + " With the board "+tictactoe.print_board_list(self.game_board)+"." 
+            print(result_text)
+            try:
+                with grpc.insecure_channel(self.node2) as channel:
+                    stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
+                    stub.UpdatePlayers(tictactoe_pb2.UpdateMessage(
+                        update_message = result_text,
+                        has_game_started = False
+                    ))
+            except:
+                raise ConnectionError('{} missing'.format(self.node2name))
+            try:
+                with grpc.insecure_channel(self.node3) as channel:
+                    stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
+                    stub.UpdatePlayers(tictactoe_pb2.UpdateMessage(
+                        update_message = result_text,
+                        has_game_started = False
+                    ))
+            except:
+                raise ConnectionError('{} missing'.format(self.node3name))
+            self.game_board = None
+            self.turn = None
+            self.player_1 = None
+            self.player_2 = None
+            self.has_game_started = False
+
 
     def init_game(self):
         self.game_board = tictactoe.blank_board_list()
@@ -530,25 +580,6 @@ def serve():
     # Wait for other nodes to become available
     servicer.wait_for_others()
 
-    # Time sync
-    servicer.sync_time()
-
-    while servicer.time_diff is None:
-        print('{} waiting for time sync...'.format(servicer.name))
-        time.sleep(0.25)
-
-    # Leader election
-    while not servicer.coordinator:
-        servicer.start_election()
-        print('Waiting for coordinator to be elected...')
-        time.sleep(0.25)
-
-    if servicer.id == servicer.coordinator:
-        servicer.init_game()
-        print('{} selected as coordinator'.format(servicer.name))
-
-    # Game loop
-    print('{} setup completed. Game is ready'.format(servicer.name))
     try:
         while True:
             # TODO: game loop stuff
