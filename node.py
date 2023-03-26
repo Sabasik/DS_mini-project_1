@@ -507,11 +507,26 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
                     ))
             except:
                 raise ConnectionError('{} missing'.format(self.node3name))
-            self.game_board = None
-            self.turn = None
-            self.player_1 = None
-            self.player_2 = None
-            self.has_game_started = False
+            self.reset_fields()
+
+    
+    def reset_fields(self):
+        self.coordinator = None
+
+        self.node2name = None
+        self.node3name = None
+
+        self.node2id = None
+        self.node3id= None
+
+        self.received_diff = False
+        self.time_diff = 0
+
+        self.game_board = None
+        self.turn = None
+        self.player_1 = None
+        self.player_2 = None
+        self.has_game_started = False
 
 
     def init_game(self):
