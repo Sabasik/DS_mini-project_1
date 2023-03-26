@@ -13,6 +13,7 @@ service TicTacToe {
     rpc GetGameBoard(BoardRequest) returns (BoardResponse) {}
     rpc UpdatePlayers(UpdateMessage) returns (Empty) {}
     rpc QuitGame(QuitMessage) returns (Empty) {}
+    rpc Timeout(TimeoutRequest) returns (Empty) {}
 }
 
 message AckRequest {}
@@ -31,6 +32,7 @@ message StartResponse {
 message RestartMessage {
     int32 node_id = 1;
     string node_name = 2;
+    bool timeout = 3;
 }
 
 message TimeRequest {}
@@ -90,6 +92,12 @@ message UpdateMessage {
 message QuitMessage {
     int32 node_id = 1;
     string node_name = 2;
+}
+
+message TimeoutRequest {
+    int32 node_id = 1;
+    string node_name = 2;
+    float timeout_len = 3;
 }
 
 message Empty {}

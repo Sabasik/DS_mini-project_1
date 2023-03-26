@@ -74,6 +74,11 @@ class TicTacToeStub(object):
                 request_serializer=tictactoe__pb2.QuitMessage.SerializeToString,
                 response_deserializer=tictactoe__pb2.Empty.FromString,
                 )
+        self.Timeout = channel.unary_unary(
+                '/TicTacToe/Timeout',
+                request_serializer=tictactoe__pb2.TimeoutRequest.SerializeToString,
+                response_deserializer=tictactoe__pb2.Empty.FromString,
+                )
 
 
 class TicTacToeServicer(object):
@@ -151,6 +156,12 @@ class TicTacToeServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def Timeout(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_TicTacToeServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -212,6 +223,11 @@ def add_TicTacToeServicer_to_server(servicer, server):
             'QuitGame': grpc.unary_unary_rpc_method_handler(
                     servicer.QuitGame,
                     request_deserializer=tictactoe__pb2.QuitMessage.FromString,
+                    response_serializer=tictactoe__pb2.Empty.SerializeToString,
+            ),
+            'Timeout': grpc.unary_unary_rpc_method_handler(
+                    servicer.Timeout,
+                    request_deserializer=tictactoe__pb2.TimeoutRequest.FromString,
                     response_serializer=tictactoe__pb2.Empty.SerializeToString,
             ),
     }
@@ -424,6 +440,23 @@ class TicTacToe(object):
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/TicTacToe/QuitGame',
             tictactoe__pb2.QuitMessage.SerializeToString,
+            tictactoe__pb2.Empty.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def Timeout(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/TicTacToe/Timeout',
+            tictactoe__pb2.TimeoutRequest.SerializeToString,
             tictactoe__pb2.Empty.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
