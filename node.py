@@ -364,6 +364,9 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         print("Unknown command!")
 
     def set_symbol(self, position, symbol):
+        if not self.has_game_started:
+            print("Game has not started yet!")
+            return
         print("Set symbol",symbol, position)
         if self.coordinator == self.id:
             print("Game master cannot set symbols!")
@@ -394,6 +397,9 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
                 print(response.fail_message)
     
     def list_board(self):
+        if not self.has_game_started:
+            print("Game has not started yet!")
+            return
         response = False
         if self.coordinator == self.id:
             response = self.GetGameBoard(tictactoe_pb2.BoardRequest(),None)
@@ -450,6 +456,9 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         print("Set time-out",role,time)
     
     def start_game(self):
+        if self.has_game_started:
+            print("Game has already started!")
+            return
         print("Start game")
         
         # Time sync
