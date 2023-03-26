@@ -394,6 +394,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
                 print(response.fail_message)
     
     def list_board(self):
+        response = False
         if self.coordinator == self.id:
             response = self.GetGameBoard(tictactoe_pb2.BoardRequest(),None)
         elif self.coordinator == self.node2id:
@@ -410,7 +411,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
                     response = stub.GetGameBoard(tictactoe_pb2.BoardRequest())
             except:
                 raise ConnectionError('{} missing'.format(self.node3name))
-        if not response.success:
+        if not response or not response.success:
             print("No board found :(")
         else:
             print(response.timestamp,',',tictactoe.print_board_list(response.board))
