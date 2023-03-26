@@ -319,6 +319,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
             else:
                 self.turn = self.player_1
             print("{} set at {}.".format(request.symbol,request.tile))
+            self.check_end()
             return tictactoe_pb2.MoveResponse(
                 success=True, 
                 fail_message="Success!")
