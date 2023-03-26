@@ -116,6 +116,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         self.turn = None
         self.player_1 = None
         self.player_2 = None
+        self.waiting_start = False
         self.has_game_started = False
 
     def Ack(self, request, context):
@@ -134,7 +135,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
 
                         print('Node2 ({}) is ready'.format(self.node2name))
                 except:
-                    print('Waiting for Node2...')
+                    print('Waiting for Node2 to connect...')
 
             if not self.node3name:
                 try:
@@ -147,13 +148,71 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
 
                         print('Node3 ({}) is ready'.format(self.node3name))
                 except:
-                    print('Waiting for Node3...')
+                    print('Waiting for Node3 to connect...')
 
             if self.node2name and self.node3name:
                 print('Node2 ({}) and Node3 ({}) are ready'.format(self.node2name, self.node3name))
                 return True
 
             time.sleep(0.5)
+
+    def Start(self, request, context):
+        return tictactoe_pb2.StartResponse(ready=self.waiting_start)
+
+    def ask_status(self):
+        node2_start = False
+        node3_start = False
+        while not(node2_start and node3_start):
+            if not node2_start:
+                try:
+                    with grpc.insecure_channel(self.node2) as channel:
+                        stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
+                        response = stub.Start(tictactoe_pb2.StartMessage())
+                        node2_start = response.ready
+                except:
+                    raise ConnectionError('{} missing'.format(self.node2name))
+            
+            if not node3_start:
+                try:
+                    with grpc.insecure_channel(self.node3) as channel:
+                        stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
+                        response = stub.Start(tictactoe_pb2.StartMessage())
+                        node3_start = response.ready
+                except:
+                    raise ConnectionError('{} missing'.format(self.node3name))
+            
+            if not node2_start:
+                print('Waiting for {} to join new game...'.format(self.node2name))
+
+            if not node3_start:
+                print('Waiting for {} to join new game...'.format(self.node3name))
+            
+            print()
+            time.sleep(1)
+
+    def Restart(self, request, context):
+        restart_id = request.node_id
+        restart_name = request.node_name
+        print('Game restarted by {}#{}. Enter "Start-game" to start a new game.'.format(restart_name, restart_id))
+        self.has_game_started = False
+        return tictactoe_pb2.Empty()
+    
+    def restart_game(self):
+        self.has_game_started = False
+        try:
+            with grpc.insecure_channel(self.node2) as channel:
+                stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
+                _ = stub.Restart(tictactoe_pb2.RestartMessage(node_id=self.id, node_name=self.name))
+        except:
+            raise ConnectionError('{} missing'.format(self.node2name))
+        
+        try:
+            with grpc.insecure_channel(self.node3) as channel:
+                stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
+                _ = stub.Restart(tictactoe_pb2.RestartMessage(node_id=self.id, node_name=self.name))
+        except:
+            raise ConnectionError('{} missing'.format(self.node3name))
+        print('Game restarted. Enter "Start-game" to start a new game.')
 
     def Time(self, request, context):
         time = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] + "Z"
@@ -162,7 +221,9 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
     def ReceiveTime(self, request, context):
         if self.received_diff:
             return tictactoe_pb2.SetTimeResponse(time_accepted=False)
-        print('{} received time diff {}'.format(self.name, request.time_diff))
+        
+        # print('{} received time diff {}'.format(self.name, request.time_diff))
+
         self.received_diff = True
         self.time_diff = request.time_diff
         return tictactoe_pb2.SetTimeResponse(time_accepted=True)
@@ -215,13 +276,13 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         node3_time_diff = -(node3_time_diff - local_time_diff) / timedelta(milliseconds=1)
         local_time_diff = local_time_diff / timedelta(milliseconds=1)
         if not self.received_diff:
-            print('{} is sending time information'.format(self.name))
+            # print('{} is sending time information'.format(self.name))
             try:
                 with grpc.insecure_channel(self.node2) as channel:
                     stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
                     response = stub.ReceiveTime(tictactoe_pb2.SetTime(time_diff=node2_time_diff))
                     node2_accepted = response.time_accepted
-                    print('Node2 accepted: ', response.time_accepted)
+                     # print('Node2 accepted: ', response.time_accepted)
             except:
                 raise ConnectionError('{} missing'.format(self.node2name))
 
@@ -231,7 +292,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
                         stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
                         response = stub.ReceiveTime(tictactoe_pb2.SetTime(time_diff=node3_time_diff))
                         node3_accepted = response.time_accepted
-                        print('Node3 accepted: ', response.time_accepted)
+                        # print('Node3 accepted: ', response.time_accepted)
                 except:
                     raise ConnectionError('{} missing'.format(self.node3name))
 
@@ -463,28 +524,44 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
     def start_game(self):
         if self.has_game_started:
             print("Game has already started!")
+            confirmation = input('Are you sure you want to start a new game (yes/no): ')
+            if confirmation.lower() == 'yes':
+                self.restart_game()
+            else:
+                print('Continuing game')
             return
-        print("Start game")
+        
+        print("Game setup. Please wait...")
+        # Resetting fiels as this might be restart scenario
+        self.reset_fields()
+        # Wait for other nodes to join new game
+        self.waiting_start = True
+        self.ask_status()
+        self.waiting_start = False
 
         # Time sync
         self.sync_time()
 
         while self.time_diff is None:
             print('{} waiting for time sync...'.format(self.name))
-            time.sleep(0.25)
-
+            time.sleep(0.5)
+        
+        print('Time synchronization completed')
         # Leader election
         while not self.coordinator:
             self.start_election()
             print('Waiting for coordinator to be elected...')
             time.sleep(0.25)
 
+        print('Coordinator elected')
         if self.id == self.coordinator:
+            print('You are selected as coordinator')
             self.init_game()
+        else:
             print('{} selected as coordinator'.format(self.name))
 
         # Game loop
-        print('{} setup completed. Game is ready'.format(self.name))
+        print('{} setup completed. Game is ready\n'.format(self.name))
 
     def print_node_name(self):
         print('{}>'.format(self.name), end="")
@@ -517,12 +594,6 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
 
     def reset_fields(self):
         self.coordinator = None
-
-        self.node2name = None
-        self.node3name = None
-
-        self.node2id = None
-        self.node3id = None
 
         self.received_diff = False
         self.time_diff = 0
@@ -581,6 +652,28 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         self.turn = self.player_1
         self.has_game_started = True
 
+    def QuitGame(self, request, context):
+        node_id = request.node_id
+        node_name = request.node_name
+        self.has_game_started = False
+        print('{}#{} left the game. Current game ended.'.format(node_name, node_id))
+        return tictactoe_pb2.Empty()
+
+    def send_quit_game(self):
+        try:
+            with grpc.insecure_channel(self.node2) as channel:
+                stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
+                _ = stub.QuitGame(tictactoe_pb2.QuitMessage(node_id=self.id, node_name=self.name))
+        except:
+            pass
+
+        try:
+            with grpc.insecure_channel(self.node3) as channel:
+                stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
+                _ = stub.QuitGame(tictactoe_pb2.QuitMessage(node_id=self.id, node_name=self.name))
+        except:
+            pass
+
 
 def serve():
     if array_index(sys.argv, '--help') != -1:
@@ -610,10 +703,10 @@ def serve():
 
     try:
         while True:
-            # TODO: game loop stuff
             user_command = input('{}>'.format(name))
             servicer.process_command(user_command)
     except KeyboardInterrupt:
+        servicer.send_quit_game()
         server.stop(0)
 
 

@@ -2,6 +2,8 @@ syntax = "proto3";
 
 service TicTacToe {
     rpc Ack(AckRequest) returns (AckResponse) {}
+    rpc Start(StartMessage) returns (StartResponse) {}
+    rpc Restart(RestartMessage) returns (Empty) {}
     rpc Time(TimeRequest) returns (TimeResponse) {}
     rpc ReceiveTime(SetTime) returns (SetTimeResponse) {}
     rpc ReceiveTimeString(SetTimeString) returns(SetTimeResponse) {}
@@ -10,6 +12,7 @@ service TicTacToe {
     rpc Coordinator(CoordinatorMessage) returns (ElectionResponse) {}
     rpc GetGameBoard(BoardRequest) returns (BoardResponse) {}
     rpc UpdatePlayers(UpdateMessage) returns (Empty) {}
+    rpc QuitGame(QuitMessage) returns (Empty) {}
 }
 
 message AckRequest {}
@@ -17,6 +20,17 @@ message AckRequest {}
 message AckResponse {
     string name = 1;
     int32 id = 2;
+}
+
+message StartMessage {}
+
+message StartResponse {
+    bool ready = 1;
+}
+
+message RestartMessage {
+    int32 node_id = 1;
+    string node_name = 2;
 }
 
 message TimeRequest {}
@@ -71,6 +85,11 @@ message BoardResponse {
 message UpdateMessage {
     string update_message = 1;
     bool has_game_started = 2;
+}
+
+message QuitMessage {
+    int32 node_id = 1;
+    string node_name = 2;
 }
 
 message Empty {}
