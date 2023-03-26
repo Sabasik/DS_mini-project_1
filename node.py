@@ -18,6 +18,7 @@ pattern_set_time_out = re.compile("Set-time-out (players|game-master) (\d+(\.\d*
 player_1_symbol = "X"
 player_2_symbol = "O"
 
+
 def print_help():
     print("""
     This is a TicTacToe node.
@@ -37,7 +38,7 @@ def array_index(array, element):
         return array.index(element)
     except:
         return -1
-    
+
 
 def element_or_default(array, index, default):
     try:
@@ -63,6 +64,7 @@ def node_name(args):
         return element_or_default(args, name_index, default_name)
     return default_name
 
+
 def node_id(args):
     default_id = random.randint(1, 4000)
 
@@ -76,7 +78,7 @@ def other_nodes(args):
     node2_index = array_index(args, '-node2')
     if node2_index == -1:
         raise ValueError('-node2 missing')
-    
+
     node2_value = element_or_default(args, node2_index + 1, '')
     if not node2_value:
         raise ValueError('-node2 value is missing')
@@ -88,8 +90,9 @@ def other_nodes(args):
     node3_value = element_or_default(args, node3_index + 1, '')
     if not node3_value:
         raise ValueError('-node3 value is missing')
-    
+
     return node2_value, node3_value
+
 
 class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
     def __init__(self, id, name, node2, node3):
@@ -104,7 +107,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         self.node3name = None
 
         self.node2id = None
-        self.node3id= None
+        self.node3id = None
 
         self.received_diff = False
         self.time_diff = 0
@@ -132,7 +135,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
                         print('Node2 ({}) is ready'.format(self.node2name))
                 except:
                     print('Waiting for Node2...')
-            
+
             if not self.node3name:
                 try:
                     with grpc.insecure_channel(self.node3) as channel:
@@ -149,13 +152,13 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
             if self.node2name and self.node3name:
                 print('Node2 ({}) and Node3 ({}) are ready'.format(self.node2name, self.node3name))
                 return True
-            
+
             time.sleep(0.5)
 
     def Time(self, request, context):
         time = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] + "Z"
         return tictactoe_pb2.TimeResponse(time=time)
-    
+
     def ReceiveTime(self, request, context):
         if self.received_diff:
             return tictactoe_pb2.SetTimeResponse(time_accepted=False)
@@ -163,13 +166,13 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         self.received_diff = True
         self.time_diff = request.time_diff
         return tictactoe_pb2.SetTimeResponse(time_accepted=True)
-    
+
     def ReceiveTimeString(self, request, context):
         print('{} received new time {}'.format(self.name, request.time))
-        current_datetime = datetime.utcnow()+timedelta(milliseconds=self.time_diff)
-        future_datetime = datetime.combine(current_datetime.date(),datetime.strptime(request.time,'%H:%M:%S').time())
-        self.time_diff = (future_datetime-datetime.utcnow())/timedelta(milliseconds=1)
-        print("New UTC time:", datetime.utcnow()+timedelta(milliseconds=self.time_diff))
+        current_datetime = datetime.utcnow() + timedelta(milliseconds=self.time_diff)
+        future_datetime = datetime.combine(current_datetime.date(), datetime.strptime(request.time, '%H:%M:%S').time())
+        self.time_diff = (future_datetime - datetime.utcnow()) / timedelta(milliseconds=1)
+        print("New UTC time:", datetime.utcnow() + timedelta(milliseconds=self.time_diff))
         return tictactoe_pb2.SetTimeResponse(time_accepted=True)
 
     def sync_time(self):
@@ -183,12 +186,13 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
                 current_local_time = datetime.utcnow()
 
                 rtt = request_end - request_start
-                estimated_node2_time = datetime.strptime(response.time, "%Y-%m-%d %H:%M:%S.%fZ") + timedelta(seconds=(rtt / 2))
+                estimated_node2_time = datetime.strptime(response.time, "%Y-%m-%d %H:%M:%S.%fZ") + timedelta(
+                    seconds=(rtt / 2))
 
                 node2_time_diff = -(current_local_time - estimated_node2_time)
-        except:            
+        except:
             raise ConnectionError('{} missing'.format(self.node2name))
-        
+
         # Node 3 time
         try:
             with grpc.insecure_channel(self.node3) as channel:
@@ -199,12 +203,13 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
                 current_local_time = datetime.utcnow()
 
                 rtt = request_end - request_start
-                estimated_node3_time = datetime.strptime(response.time, "%Y-%m-%d %H:%M:%S.%fZ") + timedelta(seconds=(rtt / 2))
+                estimated_node3_time = datetime.strptime(response.time, "%Y-%m-%d %H:%M:%S.%fZ") + timedelta(
+                    seconds=(rtt / 2))
 
                 node3_time_diff = -(current_local_time - estimated_node3_time)
         except:
             raise ConnectionError('{} missing'.format(self.node3name))
-        
+
         local_time_diff = (node3_time_diff + node2_time_diff) / 3
         node2_time_diff = -(node2_time_diff - local_time_diff) / timedelta(milliseconds=1)
         node3_time_diff = -(node3_time_diff - local_time_diff) / timedelta(milliseconds=1)
@@ -219,7 +224,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
                     print('Node2 accepted: ', response.time_accepted)
             except:
                 raise ConnectionError('{} missing'.format(self.node2name))
-            
+
             if node2_accepted:
                 try:
                     with grpc.insecure_channel(self.node3) as channel:
@@ -229,7 +234,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
                         print('Node3 accepted: ', response.time_accepted)
                 except:
                     raise ConnectionError('{} missing'.format(self.node3name))
-            
+
             if node2_accepted and node3_accepted:
                 self.time_diff = local_time_diff
 
@@ -238,7 +243,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
             with grpc.insecure_channel(target_node) as channel:
                 stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
                 _ = stub.Coordinator(tictactoe_pb2.CoordinatorMessage(coordinator_id=self.id))
-        except:            
+        except:
             raise ConnectionError('{} missing'.format(target_name))
 
     def send_election_message(self, target_node, target_name):
@@ -247,7 +252,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
                 stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
                 response = stub.Election(tictactoe_pb2.ElectionMessage(id=self.id))
                 node_status = response.acknowledgement
-        except:            
+        except:
             raise ConnectionError('{} missing'.format(target_name))
         return node_status
 
@@ -257,21 +262,21 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         if self.id > self.node2id and self.id > self.node3id:
             self.send_coordinator_message(self.node2, self.node2name)
             self.send_coordinator_message(self.node3, self.node2name)
-            
+
             self.coordinator = self.id
 
         # Check if nodes with higher id are available
         elif self.id < self.node2id and self.id < self.node3id:
             node2_status = self.send_election_message(self.node2, self.node2name)
             node3_status = self.send_election_message(self.node3, self.node3name)
-            
+
             if not (node2_status or node3_status):
                 self.coordinator = self.id
-            
+
         # Check if node 2 is available
         elif self.id < self.node2id:
             node2_status = self.send_election_message(self.node2, self.node2name)
-            
+
             if not (node2_status):
                 self.send_coordinator_message(self.node3, self.node3name)
 
@@ -280,7 +285,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         # Check if node 3 is available
         else:
             node3_status = self.send_election_message(self.node3, self.node3name)
-            
+
             if not (node3_status):
                 self.send_coordinator_message(self.node2, self.node2name)
 
@@ -288,7 +293,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
 
     def Election(self, request, context):
         sender_id = request.id
-        response = sender_id < self.id # OK
+        response = sender_id < self.id  # OK
         return tictactoe_pb2.ElectionResponse(acknowledgement=response)
 
     def Coordinator(self, request, context):
@@ -298,32 +303,33 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
     def Move(self, request, context):
         if request.player_id != self.turn:
             return tictactoe_pb2.MoveResponse(
-                success=False, 
+                success=False,
                 fail_message="It is the other player's turn!")
         elif (request.player_id == self.player_1 and request.symbol != player_1_symbol):
             return tictactoe_pb2.MoveResponse(
-                success=False, 
+                success=False,
                 fail_message="You can't set symbol {}! Your symbol is {}.".format(request.symbol, player_1_symbol))
         elif (request.player_id == self.player_2 and request.symbol != player_2_symbol):
             return tictactoe_pb2.MoveResponse(
-                success=False, 
+                success=False,
                 fail_message="You can't set symbol {}! Your symbol is {}.".format(request.symbol, player_2_symbol))
-        elif self.game_board[request.tile-1] != " ":
+        elif self.game_board[request.tile - 1] != " ":
             return tictactoe_pb2.MoveResponse(
-                success=False, 
-                fail_message="Tile {} is already filled with {}.".format(request.tile, self.game_board[request.tile-1]))
+                success=False,
+                fail_message="Tile {} is already filled with {}.".format(request.tile,
+                                                                         self.game_board[request.tile - 1]))
         else:
-            self.game_board[request.tile-1] = request.symbol
+            self.game_board[request.tile - 1] = request.symbol
             if self.turn == self.player_1:
                 self.turn = self.player_2
             else:
                 self.turn = self.player_1
-            print("{} set at {}.".format(request.symbol,request.tile))
+            print("{} set at {}.".format(request.symbol, request.tile))
             self.check_end()
             return tictactoe_pb2.MoveResponse(
-                success=True, 
+                success=True,
                 fail_message="Success!")
-            
+
     def UpdatePlayers(self, request, context):
         self.has_game_started = request.has_game_started
         print(request.update_message)
@@ -332,18 +338,18 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
     def GetGameBoard(self, request, context):
         if self.game_board:
             return tictactoe_pb2.BoardResponse(
-                board=self.game_board, 
-                timestamp = str(datetime.utcnow() + timedelta(milliseconds=self.time_diff)), 
+                board=self.game_board,
+                timestamp=str(datetime.utcnow() + timedelta(milliseconds=self.time_diff)),
                 success=True)
         return tictactoe_pb2.BoardResponse(
-            board=self.game_board, 
-            timestamp = str(datetime.utcnow() + timedelta(milliseconds=self.time_diff)), 
+            board=self.game_board,
+            timestamp=str(datetime.utcnow() + timedelta(milliseconds=self.time_diff)),
             success=False)
 
     def process_command(self, command):
         m = pattern_set_symbol.match(command)
         if m:
-            self.set_symbol(int(m.group(1)),m.group(2))
+            self.set_symbol(int(m.group(1)), m.group(2))
             return
         m = pattern_list_board.match(command)
         if m:
@@ -351,11 +357,11 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
             return
         m = pattern_set_node_time.match(command)
         if m:
-            self.set_node_time(m.group(1),m.group(2))
+            self.set_node_time(m.group(1), m.group(2))
             return
         m = pattern_set_time_out.match(command)
         if m:
-            self.set_time_out(m.group(1),float(m.group(2)))
+            self.set_time_out(m.group(1), float(m.group(2)))
             return
         m = pattern_start_game.match(command)
         if m:
@@ -367,7 +373,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         if not self.has_game_started:
             print("Game has not started yet!")
             return
-        print("Set symbol",symbol, position)
+        print("Set symbol", symbol, position)
         if self.coordinator == self.id:
             print("Game master cannot set symbols!")
         else:
@@ -376,8 +382,8 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
                     with grpc.insecure_channel(self.node2) as channel:
                         stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
                         response = stub.Move(tictactoe_pb2.MoveRequest(
-                            tile = position, 
-                            symbol=symbol, 
+                            tile=position,
+                            symbol=symbol,
                             player_id=self.id))
                 except:
                     raise ConnectionError('{} missing'.format(self.node2name))
@@ -386,8 +392,8 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
                     with grpc.insecure_channel(self.node3) as channel:
                         stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
                         response = stub.Move(tictactoe_pb2.MoveRequest(
-                            tile = position, 
-                            symbol=symbol, 
+                            tile=position,
+                            symbol=symbol,
                             player_id=self.id))
                 except:
                     raise ConnectionError('{} missing'.format(self.node3name))
@@ -395,14 +401,14 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
                 print("Move accepted!")
             else:
                 print(response.fail_message)
-    
+
     def list_board(self):
         if not self.has_game_started:
             print("Game has not started yet!")
             return
         response = False
         if self.coordinator == self.id:
-            response = self.GetGameBoard(tictactoe_pb2.BoardRequest(),None)
+            response = self.GetGameBoard(tictactoe_pb2.BoardRequest(), None)
         elif self.coordinator == self.node2id:
             try:
                 with grpc.insecure_channel(self.node2) as channel:
@@ -420,22 +426,22 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         if not response or not response.success:
             print("No board found :(")
         else:
-            print(response.timestamp,',',tictactoe.print_board_list(response.board))
-    
+            print(response.timestamp, ',', tictactoe.print_board_list(response.board))
+
     def set_node_time(self, node_name, time):
-        print("Set node time",node_name,time)
+        print("Set node time", node_name, time)
         if self.name == node_name:
-            current_datetime = datetime.utcnow()+timedelta(milliseconds=self.time_diff)
-            future_datetime = datetime.combine(current_datetime.date(),datetime.strptime(time,'%H:%M:%S').time())
-            self.time_diff = (future_datetime-datetime.utcnow())/timedelta(milliseconds=1)
-            print("New UTC time:", datetime.utcnow()+timedelta(milliseconds=self.time_diff))
+            current_datetime = datetime.utcnow() + timedelta(milliseconds=self.time_diff)
+            future_datetime = datetime.combine(current_datetime.date(), datetime.strptime(time, '%H:%M:%S').time())
+            self.time_diff = (future_datetime - datetime.utcnow()) / timedelta(milliseconds=1)
+            print("New UTC time:", datetime.utcnow() + timedelta(milliseconds=self.time_diff))
         elif self.coordinator == self.id:
             if self.node2name == node_name:
                 try:
                     with grpc.insecure_channel(self.node2) as channel:
                         stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
                         response = stub.ReceiveTimeString(tictactoe_pb2.SetTimeString(time=time))
-                        print(self.node2name,'accepted:', response.time_accepted)
+                        print(self.node2name, 'accepted:', response.time_accepted)
                 except:
                     raise ConnectionError('{} missing'.format(self.node2name))
             elif self.node3name == node_name:
@@ -443,7 +449,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
                     with grpc.insecure_channel(self.node3) as channel:
                         stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
                         response = stub.ReceiveTimeString(tictactoe_pb2.SetTimeString(time=time))
-                        print(self.node3name,'accepted:', response.time_accepted)
+                        print(self.node3name, 'accepted:', response.time_accepted)
                 except:
                     raise ConnectionError('{} missing'.format(self.node3name))
             else:
@@ -451,16 +457,15 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         else:
             print("Only the game master can change time of other nodes.")
 
-    
     def set_time_out(self, role, time):
-        print("Set time-out",role,time)
-    
+        print("Set time-out", role, time)
+
     def start_game(self):
         if self.has_game_started:
             print("Game has already started!")
             return
         print("Start game")
-        
+
         # Time sync
         self.sync_time()
 
@@ -482,19 +487,20 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         print('{} setup completed. Game is ready'.format(self.name))
 
     def print_node_name(self):
-        print('{}>'.format(self.name),end="")
+        print('{}>'.format(self.name), end="")
 
     def check_end(self):
         is_end, result = tictactoe.check_end_list(self.game_board)
         if is_end:
-            result_text = tictactoe.get_result(result) + " With the board "+tictactoe.print_board_list(self.game_board)+"." 
+            result_text = tictactoe.get_result(result) + " With the board " + tictactoe.print_board_list(
+                self.game_board) + "."
             print(result_text)
             try:
                 with grpc.insecure_channel(self.node2) as channel:
                     stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
                     stub.UpdatePlayers(tictactoe_pb2.UpdateMessage(
-                        update_message = result_text,
-                        has_game_started = False
+                        update_message=result_text,
+                        has_game_started=False
                     ))
             except:
                 raise ConnectionError('{} missing'.format(self.node2name))
@@ -502,14 +508,13 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
                 with grpc.insecure_channel(self.node3) as channel:
                     stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
                     stub.UpdatePlayers(tictactoe_pb2.UpdateMessage(
-                        update_message = result_text,
-                        has_game_started = False
+                        update_message=result_text,
+                        has_game_started=False
                     ))
             except:
                 raise ConnectionError('{} missing'.format(self.node3name))
             self.reset_fields()
 
-    
     def reset_fields(self):
         self.coordinator = None
 
@@ -517,7 +522,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         self.node3name = None
 
         self.node2id = None
-        self.node3id= None
+        self.node3id = None
 
         self.received_diff = False
         self.time_diff = 0
@@ -528,10 +533,9 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         self.player_2 = None
         self.has_game_started = False
 
-
     def init_game(self):
         self.game_board = tictactoe.blank_board_list()
-        random_bit = random.randint(0,1)
+        random_bit = random.randint(0, 1)
         if random_bit == 0:
             self.player_1 = self.node2id
             self.player_2 = self.node3id
@@ -539,8 +543,8 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
                 with grpc.insecure_channel(self.node2) as channel:
                     stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
                     stub.UpdatePlayers(tictactoe_pb2.UpdateMessage(
-                        update_message = 'You are player 1 and using symbol ' + player_1_symbol + ". It's your turn!",
-                        has_game_started = True
+                        update_message='You are player 1 and using symbol ' + player_1_symbol + ". It's your turn!",
+                        has_game_started=True
                     ))
             except:
                 raise ConnectionError('{} missing'.format(self.node2name))
@@ -548,8 +552,8 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
                 with grpc.insecure_channel(self.node3) as channel:
                     stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
                     stub.UpdatePlayers(tictactoe_pb2.UpdateMessage(
-                        update_message = 'You are player 2 and using symbol ' + player_2_symbol,
-                        has_game_started = True
+                        update_message='You are player 2 and using symbol ' + player_2_symbol,
+                        has_game_started=True
                     ))
             except:
                 raise ConnectionError('{} missing'.format(self.node3name))
@@ -560,8 +564,8 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
                 with grpc.insecure_channel(self.node3) as channel:
                     stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
                     stub.UpdatePlayers(tictactoe_pb2.UpdateMessage(
-                        update_message = 'You are player 1 and using symbol ' + player_1_symbol + ". It's your turn!",
-                        has_game_started = True
+                        update_message='You are player 1 and using symbol ' + player_1_symbol + ". It's your turn!",
+                        has_game_started=True
                     ))
             except:
                 raise ConnectionError('{} missing'.format(self.node3name))
@@ -569,15 +573,13 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
                 with grpc.insecure_channel(self.node2) as channel:
                     stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
                     stub.UpdatePlayers(tictactoe_pb2.UpdateMessage(
-                        update_message = 'You are player 2 and using symbol ' + player_2_symbol,
-                        has_game_started = True
+                        update_message='You are player 2 and using symbol ' + player_2_symbol,
+                        has_game_started=True
                     ))
             except:
                 raise ConnectionError('{} missing'.format(self.node2name))
         self.turn = self.player_1
         self.has_game_started = True
-    
-
 
 
 def serve():
@@ -595,7 +597,7 @@ def serve():
 
     servicer = TicTacToeServicer(id, name, node2, node3)
     tictactoe_pb2_grpc.add_TicTacToeServicer_to_server(servicer, server)
-    
+
     server.add_insecure_port('0.0.0.0:{}'.format(port))
     server.start()
 
