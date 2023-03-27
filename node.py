@@ -603,6 +603,9 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
             self.restart_game(True)
 
     def set_time_out(self, role, time):
+        if not self.has_game_started:
+            print("Game has not started yet! The roles have not been set.")
+            return
         # For server, double verification is needed
         is_coordinator = self.coordinator == self.id
         if role == 'game-master' and is_coordinator:
@@ -671,8 +674,6 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         # Game loop
         print('{} setup completed. Game is ready\n'.format(self.name))
 
-    def print_node_name(self):
-        print('{}>'.format(self.name), end="")
 
     def check_end(self):
         is_end, result = tictactoe.check_end_list(self.game_board)
