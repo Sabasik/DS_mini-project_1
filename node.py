@@ -125,6 +125,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
 
         self.timeout_requested = False
         self.other_player_req_timeout = False
+        self.coordinator_timeout_length = None
 
     def Ack(self, request, context):
         return tictactoe_pb2.AckResponse(name=self.name, id=self.id)
@@ -376,6 +377,10 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         return tictactoe_pb2.ElectionResponse(acknowledgement=True)
 
     def Move(self, request, context):
+        if request.player_id == self.node2id:
+            self.node2_is_active = True
+        elif request.player_id == self.node3id:
+            self.node3_is_active = True
         if request.player_id != self.turn:
             return tictactoe_pb2.MoveResponse(
                 success=False,
@@ -412,6 +417,10 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
 
     def GetGameBoard(self, request, context):
         if self.game_board:
+            if request.player_id == self.node2id:
+                self.node2_is_active = True
+            elif request.player_id == self.node3id:
+                self.node3_is_active = True
             return tictactoe_pb2.BoardResponse(
                 board=self.game_board,
                 timestamp=str(datetime.utcnow() + timedelta(milliseconds=self.time_diff)),
@@ -483,19 +492,19 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
             return
         response = False
         if self.coordinator == self.id:
-            response = self.GetGameBoard(tictactoe_pb2.BoardRequest(), None)
+            response = self.GetGameBoard(tictactoe_pb2.BoardRequest(player_id = self.id), None)
         elif self.coordinator == self.node2id:
             try:
                 with grpc.insecure_channel(self.node2) as channel:
                     stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
-                    response = stub.GetGameBoard(tictactoe_pb2.BoardRequest())
+                    response = stub.GetGameBoard(tictactoe_pb2.BoardRequest(player_id = self.id))
             except:
                 raise ConnectionError('{} missing'.format(self.node2name))
         elif self.coordinator == self.node3id:
             try:
                 with grpc.insecure_channel(self.node3) as channel:
                     stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
-                    response = stub.GetGameBoard(tictactoe_pb2.BoardRequest())
+                    response = stub.GetGameBoard(tictactoe_pb2.BoardRequest(player_id = self.id))
             except:
                 raise ConnectionError('{} missing'.format(self.node3name))
         if not response or not response.success:
@@ -598,7 +607,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         if self.node2_is_active or self.node3_is_active:
             self.node2_is_active = False
             self.node3_is_active = False
-            self.start_timeout_timer()
+            self.start_timeout_timer(self.coordinator_timeout_length)
         else:
             self.restart_game(True)
 
@@ -719,6 +728,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
 
         self.timeout_requested = False
         self.other_player_req_timeout = False
+        self.coordinator_timeout_length = None
 
     def init_game(self):
         self.game_board = tictactoe.blank_board_list()

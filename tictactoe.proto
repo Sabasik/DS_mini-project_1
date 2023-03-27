@@ -76,7 +76,9 @@ message MoveResponse {
     string fail_message = 2;
 }
 
-message BoardRequest {}
+message BoardRequest {
+    int32 player_id = 1;
+}
 
 message BoardResponse {
     repeated string board = 1;
