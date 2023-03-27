@@ -120,12 +120,10 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         self.waiting_start = False
         self.has_game_started = False
 
-        self.node2_is_active = False
-        self.node3_is_active = False
-
         self.timeout_requested = False
         self.other_player_req_timeout = False
         self.coordinator_timeout_length = None
+        self.timer = None
 
     def Ack(self, request, context):
         return tictactoe_pb2.AckResponse(name=self.name, id=self.id)
@@ -378,9 +376,9 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
 
     def Move(self, request, context):
         if request.player_id == self.node2id:
-            self.node2_is_active = True
+            self.start_timeout_timer(self.coordinator_timeout_length)
         elif request.player_id == self.node3id:
-            self.node3_is_active = True
+            self.start_timeout_timer(self.coordinator_timeout_length)
         if request.player_id != self.turn:
             return tictactoe_pb2.MoveResponse(
                 success=False,
@@ -418,9 +416,9 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
     def GetGameBoard(self, request, context):
         if self.game_board:
             if request.player_id == self.node2id:
-                self.node2_is_active = True
+                self.start_timeout_timer(self.coordinator_timeout_length)
             elif request.player_id == self.node3id:
-                self.node3_is_active = True
+                self.start_timeout_timer(self.coordinator_timeout_length)
             return tictactoe_pb2.BoardResponse(
                 board=self.game_board,
                 timestamp=str(datetime.utcnow() + timedelta(milliseconds=self.time_diff)),
@@ -604,12 +602,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         self.timer.start()
 
     def restart_by_timeout(self):
-        if self.node2_is_active or self.node3_is_active:
-            self.node2_is_active = False
-            self.node3_is_active = False
-            self.start_timeout_timer(self.coordinator_timeout_length)
-        else:
-            self.restart_game(True)
+        self.restart_game(True)
 
     def set_time_out(self, role, time):
         if not self.has_game_started:
