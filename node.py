@@ -170,7 +170,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
     def ask_status(self):
         node2_start = False
         node3_start = False
-        while not(node2_start and node3_start):
+        while not (node2_start and node3_start):
             if not node2_start:
                 try:
                     with grpc.insecure_channel(self.node2) as channel:
@@ -179,7 +179,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
                         node2_start = response.ready
                 except:
                     raise ConnectionError('{} missing'.format(self.node2name))
-            
+
             if not node3_start:
                 try:
                     with grpc.insecure_channel(self.node3) as channel:
@@ -188,13 +188,13 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
                         node3_start = response.ready
                 except:
                     raise ConnectionError('{} missing'.format(self.node3name))
-            
+
             if not node2_start:
                 print('Waiting for {} to join new game...'.format(self.node2name))
 
             if not node3_start:
                 print('Waiting for {} to join new game...'.format(self.node3name))
-            
+
             print()
             time.sleep(1)
 
@@ -208,8 +208,8 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
             print('Game restarted by {}#{}. Enter "Start-game" to start a new game.'.format(restart_name, restart_id))
         self.reset_fields()
         return tictactoe_pb2.Empty()
-    
-    def restart_game(self, timeout = False):
+
+    def restart_game(self, timeout=False):
         self.reset_fields()
         try:
             with grpc.insecure_channel(self.node2) as channel:
@@ -217,7 +217,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
                 _ = stub.Restart(tictactoe_pb2.RestartMessage(node_id=self.id, node_name=self.name, timeout=timeout))
         except:
             raise ConnectionError('{} missing'.format(self.node2name))
-        
+
         try:
             with grpc.insecure_channel(self.node3) as channel:
                 stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
@@ -236,7 +236,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
     def ReceiveTime(self, request, context):
         if self.received_diff:
             return tictactoe_pb2.SetTimeResponse(time_accepted=False)
-        
+
         # print('{} received time diff {}'.format(self.name, request.time_diff))
 
         self.received_diff = True
@@ -297,7 +297,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
                     stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
                     response = stub.ReceiveTime(tictactoe_pb2.SetTime(time_diff=node2_time_diff))
                     node2_accepted = response.time_accepted
-                     # print('Node2 accepted: ', response.time_accepted)
+                    # print('Node2 accepted: ', response.time_accepted)
             except:
                 raise ConnectionError('{} missing'.format(self.node2name))
 
@@ -492,19 +492,19 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
             return
         response = False
         if self.coordinator == self.id:
-            response = self.GetGameBoard(tictactoe_pb2.BoardRequest(player_id = self.id), None)
+            response = self.GetGameBoard(tictactoe_pb2.BoardRequest(player_id=self.id), None)
         elif self.coordinator == self.node2id:
             try:
                 with grpc.insecure_channel(self.node2) as channel:
                     stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
-                    response = stub.GetGameBoard(tictactoe_pb2.BoardRequest(player_id = self.id))
+                    response = stub.GetGameBoard(tictactoe_pb2.BoardRequest(player_id=self.id))
             except:
                 raise ConnectionError('{} missing'.format(self.node2name))
         elif self.coordinator == self.node3id:
             try:
                 with grpc.insecure_channel(self.node3) as channel:
                     stub = tictactoe_pb2_grpc.TicTacToeStub(channel)
-                    response = stub.GetGameBoard(tictactoe_pb2.BoardRequest(player_id = self.id))
+                    response = stub.GetGameBoard(tictactoe_pb2.BoardRequest(player_id=self.id))
             except:
                 raise ConnectionError('{} missing'.format(self.node3name))
         if not response or not response.success:
@@ -553,7 +553,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
                 print('{} accepted the timeout request'.format(origin_name))
                 self.other_player_req_timeout = True
                 self.start_timeout_timer(timeout_length)
-            
+
             # Other player canceling, possibly received response from server
             elif self.other_player_req_timeout:
                 # Ask for confirmation
@@ -563,7 +563,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
                 if self.timer is not None:
                     self.timer.cancel()
                 self.timer = None
-            
+
             # Other player asking for confirmation
             else:
                 # TODO: timeout has to be canceled as well
@@ -579,7 +579,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
                     self.other_player_req_timeout = True
                     print('Timeout has been set')
                 else:
-                    pass # Nothing needs to be done
+                    pass  # Nothing needs to be done
         else:
             timeout_message = 'New time-out for players = {} minutes'.format(timeout_length)
             print(timeout_message)
@@ -592,8 +592,8 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
                 _ = stub.Timeout(tictactoe_pb2.TimeoutRequest(node_id=self.id, node_name=self.name, timeout_len=length))
         except:
             raise ConnectionError('{} missing'.format(target_name))
-        
-    def start_timeout_timer(self, time = None):
+
+    def start_timeout_timer(self, time=None):
         if self.timer is not None:
             self.timer.cancel()
         if time is None:
@@ -620,7 +620,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         if role == 'game-master' and is_coordinator:
             print('Can\'t set timeout to yourself')
             return
-        
+
         if not is_coordinator and role == 'players':
             print('You can only set time-out to game-master')
             return
@@ -647,7 +647,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
             else:
                 print('Continuing game')
             return
-        
+
         print("Game setup. Please wait...")
         # Resetting fiels as this might be restart scenario
         self.reset_fields()
@@ -662,7 +662,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         while self.time_diff is None:
             print('{} waiting for time sync...'.format(self.name))
             time.sleep(0.5)
-        
+
         print('Time synchronization completed')
         # Leader election
         while not self.coordinator:
@@ -683,7 +683,6 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
 
         # Game loop
         print('{} setup completed. Game is ready\n'.format(self.name))
-
 
     def check_end(self):
         is_end, result = tictactoe.check_end_list(self.game_board)

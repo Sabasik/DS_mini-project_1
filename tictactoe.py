@@ -90,20 +90,24 @@ def list_to_matrix(board_list):
     for i in range(3):
         matrix.append([])
         for j in range(3):
-            matrix[i].append(board_list[3*i+j])
+            matrix[i].append(board_list[3 * i + j])
     return matrix
+
 
 def check_end_list(board_list):
     return check_end(list_to_matrix(board_list))
 
+
 def blank_board_list():
     return matrix_to_list(blank_board())
+
 
 def print_board_list(board_list):
     el = []
     for item in board_list:
         el.append(item if item in ['X', 'O'] else "empty")
     return ", ".join(el)
+
 
 def main():
     b = blank_board()
