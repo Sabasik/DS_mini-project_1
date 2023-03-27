@@ -680,6 +680,8 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
     def check_end(self):
         is_end, result = tictactoe.check_end_list(self.game_board)
         if is_end:
+            if self.timer is not None:
+                self.timer.cancel()
             result_text = tictactoe.get_result(result) + " With the board " + tictactoe.print_board_list(
                 self.game_board) + "."
             print(result_text)
