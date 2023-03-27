@@ -600,7 +600,6 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         else:
             self.timer = Timer(60 * time, self.restart_by_timeout)
         self.timer.start()
-        print("Timer started")
 
     def restart_by_timeout(self):
         self.restart_game(True)
