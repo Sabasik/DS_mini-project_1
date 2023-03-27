@@ -629,6 +629,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
             self.send_timeout(self.node2, self.node2name, float(time))
             self.send_timeout(self.node3, self.node3name, float(time))
             print('New time-out for players = {} minutes'.format(time))
+            self.coordinator_timeout_length = float(time)
             self.start_timeout_timer(time)
         else:
             self.timeout_requested = True
