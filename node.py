@@ -353,7 +353,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         elif self.id < self.node2id:
             node2_status = self.send_election_message(self.node2, self.node2name)
 
-            if not (node2_status):
+            if not node2_status:
                 self.send_coordinator_message(self.node3, self.node3name)
 
                 self.coordinator = self.id
@@ -362,7 +362,7 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
         else:
             node3_status = self.send_election_message(self.node3, self.node3name)
 
-            if not (node3_status):
+            if not node3_status:
                 self.send_coordinator_message(self.node2, self.node2name)
 
                 self.coordinator = self.id
@@ -385,11 +385,11 @@ class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServicer):
             return tictactoe_pb2.MoveResponse(
                 success=False,
                 fail_message="It is the other player's turn!")
-        elif (request.player_id == self.player_1 and request.symbol != player_1_symbol):
+        elif request.player_id == self.player_1 and request.symbol != player_1_symbol:
             return tictactoe_pb2.MoveResponse(
                 success=False,
                 fail_message="You can't set symbol {}! Your symbol is {}.".format(request.symbol, player_1_symbol))
-        elif (request.player_id == self.player_2 and request.symbol != player_2_symbol):
+        elif request.player_id == self.player_2 and request.symbol != player_2_symbol:
             return tictactoe_pb2.MoveResponse(
                 success=False,
                 fail_message="You can't set symbol {}! Your symbol is {}.".format(request.symbol, player_2_symbol))
